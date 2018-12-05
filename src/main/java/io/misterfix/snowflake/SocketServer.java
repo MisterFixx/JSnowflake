@@ -6,6 +6,7 @@ import joptsimple.OptionSpec;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
@@ -39,7 +40,14 @@ public class SocketServer {
             });
         }
         catch(IOException e){
-            e.printStackTrace();
+            if(e.getClass() == BindException.class){
+                System.out.println("Cannot start Snowflake server - Address is already in use!");
+                System.exit(1);
+            }
+            else {
+                e.printStackTrace();
+                System.exit(2);
+            }
         }
     }
 }
