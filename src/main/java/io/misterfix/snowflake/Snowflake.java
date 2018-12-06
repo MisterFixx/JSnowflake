@@ -2,16 +2,14 @@ package io.misterfix.snowflake;
 
 /**
  * Twitter's snowflake algorithm -- java implementation
+ * @author Some random chinese guy from some random gitlab setup
+ * Comments and code translated and fine tuned by Mister_Fix
  *
- * @author Mister_Fix
+ * From tests iv'e made this class is completley useless on it's own and need to be ran on a server to cetralize it
+ * If you create a new Snowflake object everytime you need a snowflake you will instantly get duplicates which
+ * defeats the purpose, and that's fine because that's how it's supposed to be.
  */
 class Snowflake {
-
-    /**
-     * Starting timestamp
-     */
-    private final static long START_STAMP = 1420070400000L; //Using Discord's epoch for now
-
     /**
      * Number of bits occupied by each part
      */
@@ -39,25 +37,21 @@ class Snowflake {
     private long lastStamp = -1L; //Last timestamp
 
     private long getNextMill() {
-        long mill = getNewStamp();
+        long mill = System.currentTimeMillis();
         while (mill <= lastStamp) {
-            mill = getNewStamp();
+            mill = System.currentTimeMillis();
         }
         return mill;
     }
 
-    private long getNewStamp() {
-        return System.currentTimeMillis();
-    }
-
-    Snowflake(long datacenter, long instanceId) {
-        if (datacenter > MAX_DATACENTER_NUM || datacenter < 0) {
+    Snowflake(long datacenterId, long instanceId) {
+        if (datacenterId > MAX_DATACENTER_NUM || datacenterId < 0) {
             throw new IllegalArgumentException("datacenterId can't be greater than MAX_DATACENTER_NUM or less than 0");
         }
         if (instanceId > MAX_INSTANCE_NUM || instanceId < 0) {
             throw new IllegalArgumentException("instanceId can't be greater than MAX_INSTANCE_NUM or less than 0");
         }
-        this.datacenterId = datacenter;
+        this.datacenterId = datacenterId;
         this.instanceId = instanceId;
     }
 
@@ -67,26 +61,26 @@ class Snowflake {
      * @return long the Snowflake object
      */
     synchronized long nextId() {
-        long currStmp = getNewStamp();
-        if (currStmp < lastStamp) {
+        long currStamp = System.currentTimeMillis();
+        if (currStamp < lastStamp) {
             throw new RuntimeException("Time moved backwards. Refusing to generate Snowflake");
         }
 
-        if (currStmp == lastStamp) {
+        if (currStamp == lastStamp) {
             //In the same millisecond, the serial number is incremented.
             sequence = (sequence + 1) & MAX_SEQUENCE;
             //The number of sequences in the same millisecond has reached the maximum
             if (sequence == 0L) {
-                currStmp = getNextMill();
+                currStamp = getNextMill();
             }
         } else {
             //The serial number is set to 0 in different milliseconds.
             sequence = 0L;
         }
 
-        lastStamp = currStmp;
+        lastStamp = currStamp;
 
-        return (currStmp - START_STAMP) << TIMESTAMP_LEFT //Timestamp part
+        return currStamp << TIMESTAMP_LEFT                //Timestamp part
                 | datacenterId << DATACENTER_LEFT         //Datacenter ID part
                 | instanceId << INSTANCE_LEFT             //Instance ID part
                 | sequence;                               //Serial number part
