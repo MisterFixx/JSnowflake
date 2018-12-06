@@ -5,48 +5,31 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class SocketServer {
     private static ServerSocket listener;
 
     public static void main(String[] args){
-        ThreadLocalRandom tlr = ThreadLocalRandom.current();
-        Snowflake snowflake = new Snowflake(tlr.nextInt(1, 31), tlr.nextInt(1, 31));
         OptionParser parser = new OptionParser();
         parser.allowsUnrecognizedOptions();
-        OptionSpec<Integer> threadCount = parser.accepts("thread-count").withRequiredArg().ofType(Integer.class).defaultsTo(100);
         OptionSpec<Integer> port = parser.accepts("port").withRequiredArg().ofType(Integer.class).defaultsTo(9098);
+        OptionSpec<Integer> datacenterId = parser.accepts("datacenter-id").withRequiredArg().ofType(Integer.class).defaultsTo(1);
+        OptionSpec<Integer> instanceId = parser.accepts("instance-id").withRequiredArg().ofType(Integer.class).defaultsTo(1);
         OptionSet set = parser.parse(args);
+        Snowflake snowflake = new Snowflake(set.valueOf(datacenterId), set.valueOf(instanceId));
 
         try {
             listener = new ServerSocket(set.valueOf(port));
-            ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(set.valueOf(threadCount));
-            threadPool.execute(()->{
-                System.out.println("Started server on port "+set.valueOf(port)+" with workerThreads="+set.valueOf(threadCount));
-                while (true) {
-                    try (Socket socket = listener.accept()) {
-                        new PrintWriter(socket.getOutputStream(), true).println(snowflake.nextId());
-                    }
-                    catch(IOException ignored){}
-                }
-            });
-        }
-        catch(IOException e){
-            if(e.getClass() == BindException.class){
-                System.out.println("Cannot start Snowflake server - Address is already in use!");
-                System.exit(1);
+            System.out.println("Snowflake server started on port "+set.valueOf(port)+".");
+            while (!listener.isClosed()) {
+                Socket clientSocket = listener.accept();
+                ClientServiceThread cliThread = new ClientServiceThread(clientSocket, snowflake);
+                cliThread.start();
             }
-            else {
-                e.printStackTrace();
-                System.exit(2);
-            }
+        } catch(IOException e){
+            e.printStackTrace();
         }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down...");
