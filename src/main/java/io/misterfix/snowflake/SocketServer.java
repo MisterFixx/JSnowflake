@@ -7,6 +7,7 @@ import joptsimple.OptionSpec;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -33,7 +34,14 @@ public class SocketServer {
                 } catch(IOException ignored){}
             }
         } catch(IOException e){
-            System.out.println("Snowflake server could not be started couldn't bind to port!");
+            if(e.getClass() == BindException.class){
+                System.out.println("Cannot start Snowflake server - Address is already in use!");
+                System.exit(1);
+            }
+            else {
+                e.printStackTrace();
+                System.exit(2);
+            }
         }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down...");
