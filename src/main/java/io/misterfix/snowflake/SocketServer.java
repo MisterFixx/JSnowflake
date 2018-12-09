@@ -5,7 +5,6 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -27,11 +26,8 @@ public class SocketServer {
             listener = new ServerSocket(set.valueOf(port));
             System.out.println("Snowflake server started on port "+set.valueOf(port)+".");
             while (!listener.isClosed()) {
-                Socket clientSocket = listener.accept();
-                try {
-                    PrintWriter out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()), true);
-                    out.println(snowflake.nextId());
-                } catch(IOException ignored){}
+                Socket socket = listener.accept();
+                new PrintWriter(socket.getOutputStream(), true).println(snowflake.nextId());
             }
         } catch(IOException e){
             if(e.getClass() == BindException.class){
