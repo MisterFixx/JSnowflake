@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.2'
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
     id 'java'
     id 'application'
 }
@@ -26,5 +26,6 @@ repositories {
 }
 
 dependencies {
+    compile 'io.netty:netty-all:4+'
     compile 'net.sf.jopt-simple:jopt-simple:+'
 }
