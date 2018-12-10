@@ -11,10 +11,12 @@ package io.misterfix.snowflake;
  */
 class Snowflake {
     /**
+     * INFO OF VARIABLES FOR FUTURE REFERENCE
+     *
      * Number of bits occupied by each part
-     *  SEQUENCE_BIT = 12;  //Number of bits occupied by the serial number
-     *  DATACENTER_BIT = 5; //Number of bits occupied by the PID
-     *  INSTANCE_BIT = 5;   //Number of bits occupied by the thread ID
+     *  SEQUENCE_BIT = 12;  //the serial number
+     *  DATACENTER_BIT = 5; //the datacenter ID
+     *  INSTANCE_BIT = 5;   //the instance ID
      *
      * Maximum value of each part
      *  MAX_DATACENTER_NUM = 31;
@@ -33,14 +35,6 @@ class Snowflake {
     private long lastStamp = -1L; //Last timestamp
     private long offset = 1436077819000L; //5th of july, 2015, 06:30:19 AM GMT
 
-    private long getNextMill() {
-        long mill = System.currentTimeMillis();
-        while (mill <= lastStamp) {
-            mill = System.currentTimeMillis();
-        }
-        return mill;
-    }
-
     Snowflake(long datacenterId, long instanceId) {
         if (datacenterId > 31 || datacenterId < 0) {
             throw new IllegalArgumentException("datacenterId can't be greater than 31 or less than 0");
@@ -53,9 +47,8 @@ class Snowflake {
     }
 
     /**
-     * Generate the next ID
-     *
-     * @return long the Snowflake object
+     * Generates the next snowflake on the object.
+     * @return long the the snowflake
      */
     synchronized long nextId() {
         long currStamp = System.currentTimeMillis();
@@ -81,5 +74,12 @@ class Snowflake {
                 | datacenterId << 17      //Datacenter ID part
                 | instanceId << 12        //Instance ID part
                 | sequence;               //Serial number part
+    }
+    private long getNextMill() {
+        long mill = System.currentTimeMillis();
+        while (mill <= lastStamp) {
+            mill = System.currentTimeMillis();
+        }
+        return mill;
     }
 }
