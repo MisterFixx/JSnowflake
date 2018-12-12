@@ -13,7 +13,9 @@ mainClassName = 'io.misterfix.snowflake.SocketServer'
 shadowJar {
     classifier = null
     version = null
-    manifest { attributes 'Main-Class': mainClassName }
+    manifest { 
+        attributes 'Main-Class': mainClassName 
+    }
 }
 
 
@@ -28,4 +30,6 @@ repositories {
 dependencies {
     compile 'io.netty:netty-all:4+'
     compile 'net.sf.jopt-simple:jopt-simple:+'
+    compile 'com.sparkjava:spark-core:2.7.2'
+    compile 'com.qmetric:spark-authentication:+'
 }

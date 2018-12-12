@@ -15,7 +15,7 @@ import java.net.InetSocketAddress;
 
 public class SocketServer extends ChannelInboundHandlerAdapter {
     private static Snowflake snowflake;
-    private static long ids_served; //for future use, do not remove
+    static long ids_served;
 
     public static void main(String[] args) throws InterruptedException {
         OptionParser parser = new OptionParser();
@@ -24,12 +24,12 @@ public class SocketServer extends ChannelInboundHandlerAdapter {
         OptionSpec<Integer> datacenterId = parser.accepts("datacenter-id").withRequiredArg().ofType(Integer.class).defaultsTo(1);
         OptionSpec<Integer> instanceId = parser.accepts("instance-id").withRequiredArg().ofType(Integer.class).defaultsTo(1);
         OptionSet set = parser.parse(args);
-        //The snowflake object only needs to be created once, otherwise duplicate ID's are served
         snowflake = new Snowflake(set.valueOf(datacenterId), set.valueOf(instanceId));
 
 
         EventLoopGroup group = new NioEventLoopGroup();
         try {
+            new AdminService(set.valueOf(port)+1, set.valueOf(instanceId), set.valueOf(datacenterId));
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(group);
             serverBootstrap.channel(NioServerSocketChannel.class);
