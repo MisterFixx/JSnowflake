@@ -15,7 +15,7 @@ import java.net.InetSocketAddress;
 
 public class SocketServer extends ChannelInboundHandlerAdapter {
     private static Snowflake snowflake;
-    static long ids_served;
+    private static long ids_served;
 
     public static void main(String[] args) throws InterruptedException {
         OptionParser parser = new OptionParser();
@@ -23,13 +23,16 @@ public class SocketServer extends ChannelInboundHandlerAdapter {
         OptionSpec<Integer> port = parser.accepts("port").withRequiredArg().ofType(Integer.class).defaultsTo(9098);
         OptionSpec<Integer> datacenterId = parser.accepts("datacenter-id").withRequiredArg().ofType(Integer.class).defaultsTo(1);
         OptionSpec<Integer> instanceId = parser.accepts("instance-id").withRequiredArg().ofType(Integer.class).defaultsTo(1);
+        OptionSpec<String> adminServiceUser = parser.accepts("admin-username").withRequiredArg().ofType(String.class).defaultsTo("user");
+        OptionSpec<String> adminServicePass = parser.accepts("admin-pass").withRequiredArg().ofType(String.class).defaultsTo("pass");
+        OptionSpec<Integer> adminServicePort = parser.accepts("admin-port").withRequiredArg().ofType(Integer.class).defaultsTo(9099);
         OptionSet set = parser.parse(args);
         snowflake = new Snowflake(set.valueOf(datacenterId), set.valueOf(instanceId));
 
 
         EventLoopGroup group = new NioEventLoopGroup();
         try {
-            new AdminService(set.valueOf(port)+1, set.valueOf(instanceId), set.valueOf(datacenterId));
+            new AdminService(set.valueOf(adminServicePort), set.valueOf(instanceId), set.valueOf(datacenterId), set.valueOf(adminServiceUser), set.valueOf(adminServicePass));
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(group);
             serverBootstrap.channel(NioServerSocketChannel.class);
@@ -54,5 +57,9 @@ public class SocketServer extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
+    }
+
+    static long getIdsServed(){
+        return ids_served;
     }
 }
