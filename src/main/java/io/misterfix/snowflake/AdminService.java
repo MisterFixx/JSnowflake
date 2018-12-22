@@ -8,8 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 class AdminService {
-    AdminService(int port, int instanceId, int datacenterId, String adminServiceUser, String adminServicePass){
+    AdminService(int port, int instanceId, int datacenterId, String adminServiceUser, String adminServicePass, long epoch){
         Spark.port(port);
+        Spark.before(new BasicAuthenticationFilter("/*", new AuthenticationDetails(adminServiceUser, adminServicePass)));
 
         Spark.get("/status", (req, res) ->
                 "<html>\n" +
@@ -21,6 +22,7 @@ class AdminService {
                 "            <tr><td>Datacenter Id</td><td> "+datacenterId+"</td></tr>\n" +
                 "            <tr><td>Instance Id</td><td> "+instanceId+"</td></tr>\n" +
                 "            <tr><td>Timestamp</td><td> "+System.currentTimeMillis()+"</td></tr>\n" +
+                "            <tr><td>Epoch</td><td> "+epoch+"</td></tr>\n" +
                 "            <tr><td>Time</td><td> "+new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date())+"</td></tr>\n" +
                 "            <tr><td>IDs Generated</td><td> "+SocketServer.getIdsServed()+"</td></tr>\n" +
                 "        </table>\n" +
@@ -28,9 +30,8 @@ class AdminService {
                 "</html>"
         );
 
-        Spark.before(new BasicAuthenticationFilter("/self_test", new AuthenticationDetails(adminServiceUser, adminServicePass)));
         Spark.get("/self_test", (request, response) -> {
-            Snowflake snowflake = new Snowflake(16, 28);
+            Snowflake snowflake = new Snowflake(16, 28, 1436077819000L);
             long gen_test_start = System.currentTimeMillis();
             for (int i = 0; i < 10000; i++) {
                 snowflake.nextId();
@@ -43,13 +44,11 @@ class AdminService {
                     "    </head>\n" +
                     "    <body>\n" +
                     "        <table>\n" +
-                    "            <tr><td>Time to generate 10,000 IDs:</td><td> "+(gen_test_end-gen_test_start)+"s</td></tr>\n" +
-                    "            <tr><td>IDs per second:</td><td> "+(10000/(gen_test_end-gen_test_start))+"</td></tr>\n" +
+                    "            <tr><td>Time to generate 10,000 IDs:</td><td> "+((gen_test_end-gen_test_start)/1000f)+"s</td></tr>\n" +
+                    "            <tr><td>IDs per second:</td><td> "+((10000/(gen_test_end-gen_test_start))*1000)+"</td></tr>\n" +
                     "        </table>\n" +
                     "    </body>\n" +
                     "</html>";
         });
-
-        Spark.awaitInitialization();
     }
 }

@@ -3,12 +3,11 @@ package io.misterfix.snowflake;
 class Snowflake {
     private long datacenterId;    //Datacenter ID
     private long instanceId;      //Instance ID
-    private long sequence = 0L;   //Serial number
+    private int sequence = 0;     //Serial number
     private long lastStamp = -1L; //Last timestamp
-    //5th of july, 2015, 06:30:19 AM GMT
-    private long offset = 1436077819000L; // offset timestamp, it's here to avoid creating a variable for it every time an id is generated.
+    private long epoch;
 
-    Snowflake(long datacenterId, long instanceId) {
+    Snowflake(long datacenterId, long instanceId, long epoch) {
         if (datacenterId > 31 || datacenterId < 0) {
             throw new IllegalArgumentException("datacenterId can't be greater than 31 or less than 0");
         }
@@ -17,6 +16,7 @@ class Snowflake {
         }
         this.datacenterId = datacenterId;
         this.instanceId = instanceId;
+        this.epoch = epoch;
     }
 
     synchronized long nextId() {
@@ -30,13 +30,14 @@ class Snowflake {
             if (sequence == 0L) {
                 currStamp = getNextMill();
             }
-        } else {
-            sequence = 0L;
+        }
+        else {
+            sequence = 0;
         }
 
         lastStamp = currStamp;
 
-        return (currStamp - offset) << 22
+        return (currStamp - epoch) << 22
                 | datacenterId << 17
                 | instanceId << 12
                 | sequence;
