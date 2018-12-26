@@ -7,7 +7,7 @@ plugins {
 group 'me.misterfix'
 version '1.0-SNAPSHOT'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 mainClassName = 'io.misterfix.snowflake.SocketServer'
 
 shadowJar {
@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compile 'io.netty:netty-all:4+'
+    compile 'com.github.jhg023:SimpleNet:1.2.6'
     compile 'net.sf.jopt-simple:jopt-simple:+'
     compile 'com.sparkjava:spark-core:2.7.2'
     compile 'com.qmetric:spark-authentication:+'
