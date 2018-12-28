@@ -4,12 +4,23 @@ package io.misterfix.snowflake;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import simplenet.Client;
 import simplenet.Server;
 import simplenet.packet.Packet;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class SocketServer{
     private static Snowflake snowflake;
-    private static long ids_served;
+    private static AtomicInteger ids_served = new AtomicInteger();
+    private static final Map<Client, Long> clientMap = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(5);
 
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
@@ -27,19 +38,29 @@ public class SocketServer{
         new AdminService(set.valueOf(adminServicePort), set.valueOf(instanceId), set.valueOf(datacenterId), set.valueOf(adminServiceUser), set.valueOf(adminServicePass), set.valueOf(epoch));
 
         Server server = new Server();
-        server.onConnect(client -> client.readByteAlways(value -> {
-            System.out.println(value);
-            Packet.builder().putLong(snowflake.nextId()).writeAndFlush(client);
-            ids_served++;
-        }));
+        server.onConnect(client -> {
+            clientMap.putIfAbsent(client, System.currentTimeMillis());
+            client.readByteAlways(value -> {
+                Packet.builder().putBytes(Long.toString(snowflake.nextId()).getBytes(StandardCharsets.UTF_8)).writeAndFlush(client);
+                ids_served.getAndIncrement();
+                clientMap.replace(client, System.currentTimeMillis());
+            });
+            client.preDisconnect(()-> clientMap.remove(client));
+        });
         server.bind("localhost", set.valueOf(port));
+
+        threadPool.scheduleAtFixedRate(()-> clientMap.forEach((client, lastActivity) -> {
+            if((System.currentTimeMillis() - lastActivity) > 10000){
+                client.close();
+            }
+        }), 20, 1, TimeUnit.SECONDS);
 
         System.out.println("Snowflake service started on port "+set.valueOf(port)+".");
         System.out.println("Snowflake Admin service started on port "+set.valueOf(adminServicePort)+".");
 
     }
 
-    static long getIdsServed(){
+    static AtomicInteger getIdsServed(){
         return ids_served;
     }
 }

@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.jhg023:SimpleNet:1.2.6'
+    compile 'com.github.jhg023:SimpleNet:1.2.7'
     compile 'net.sf.jopt-simple:jopt-simple:+'
     compile 'com.sparkjava:spark-core:2.7.2'
     compile 'com.qmetric:spark-authentication:+'
