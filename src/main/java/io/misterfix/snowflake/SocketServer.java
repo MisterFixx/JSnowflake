@@ -21,7 +21,7 @@ public class SocketServer{
     private static AtomicInteger ids_served = new AtomicInteger();
     private static final Map<Client, Long> clientMap = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(5);
-    private static final int maxSnowflakesPerRequest = 500000;
+    private static final int maxSnowflakesPerRequest = 500000; //I haven't done enough tests to figure out how necesary this is.
 
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
