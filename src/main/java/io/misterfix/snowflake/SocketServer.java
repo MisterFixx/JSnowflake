@@ -21,6 +21,7 @@ public class SocketServer{
     private static AtomicInteger ids_served = new AtomicInteger();
     private static final Map<Client, Long> clientMap = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(5);
+    private static final int maxSnowflakesPerRequest = 500000;
 
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
@@ -37,13 +38,19 @@ public class SocketServer{
         snowflake = new Snowflake(set.valueOf(datacenterId), set.valueOf(instanceId), set.valueOf(epoch));
         new AdminService(set.valueOf(adminServicePort), set.valueOf(instanceId), set.valueOf(datacenterId), set.valueOf(adminServiceUser), set.valueOf(adminServicePass), set.valueOf(epoch));
 
-        Server server = new Server();
+        Server server = new Server((maxSnowflakesPerRequest*18)+500);
         server.onConnect(client -> {
             clientMap.putIfAbsent(client, System.currentTimeMillis());
-            client.readByteAlways(value -> {
-                Packet.builder().putBytes(Long.toString(snowflake.nextId()).getBytes(StandardCharsets.UTF_8)).writeAndFlush(client);
-                ids_served.getAndIncrement();
-                clientMap.replace(client, System.currentTimeMillis());
+            client.readIntAlways(value -> {
+                if(value < maxSnowflakesPerRequest){
+                    String[] snowflakes = new String[value];
+                    for(int i = 0; i < value; i++) {
+                        snowflakes[i] = Long.toString(snowflake.nextId());
+                        ids_served.getAndIncrement();
+                    }
+                    Packet.builder().putBytes(String.join("\n", snowflakes).getBytes(StandardCharsets.UTF_8)).writeAndFlush(client);
+                    clientMap.replace(client, System.currentTimeMillis());
+                }
             });
             client.preDisconnect(()-> clientMap.remove(client));
         });
