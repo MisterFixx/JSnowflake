@@ -1,13 +1,13 @@
 package io.misterfix.snowflake;
 
 class Snowflake {
-    private long datacenterId;    //Datacenter ID
-    private long instanceId;      //Instance ID
+    private int datacenterId;     //Datacenter ID
+    private int instanceId;       //Instance ID
     private int sequence = 0;     //Serial number
     private long lastStamp = -1L; //Last timestamp
     private long epoch;
 
-    Snowflake(long datacenterId, long instanceId, long epoch) {
+    Snowflake(int datacenterId, int instanceId, long epoch) {
         if (datacenterId > 31 || datacenterId < 0) {
             throw new IllegalArgumentException("datacenterId can't be greater than 31 or less than 0");
         }
@@ -30,17 +30,12 @@ class Snowflake {
             if (sequence == 0L) {
                 currStamp = getNextMill();
             }
-        }
-        else {
+        } else {
             sequence = 0;
         }
-
         lastStamp = currStamp;
 
-        return (currStamp - epoch) << 22
-                | datacenterId << 17
-                | instanceId << 12
-                | sequence;
+        return (currStamp - epoch) << 22 | datacenterId << 17 | instanceId << 12 | sequence;
     }
 
     private long getNextMill() {
