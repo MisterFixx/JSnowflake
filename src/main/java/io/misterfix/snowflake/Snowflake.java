@@ -1,10 +1,10 @@
 package io.misterfix.snowflake;
 
 class Snowflake {
-    private int datacenterId;     //Datacenter ID
-    private int instanceId;       //Instance ID
-    private int sequence = 0;     //Serial number
-    private long lastStamp = -1L; //Last timestamp
+    private int datacenterId;
+    private int instanceId;
+    private int sequence = 0;
+    private long lastStamp = -1L;
     private long epoch;
 
     Snowflake(int datacenterId, int instanceId, long epoch) {

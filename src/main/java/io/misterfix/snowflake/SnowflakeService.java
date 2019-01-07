@@ -4,14 +4,20 @@ import simplenet.Client;
 import simplenet.Server;
 import simplenet.packet.Packet;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class SnowflakeService {
     private static final Snowflake snowflake = Main.getSnowflake();
-    private static final Map<Client, Long> clientMap = Main.getClientMap();
+    private static final Map<Client, Long> clientMap = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(5);
+    private static AtomicInteger ids_served = new AtomicInteger();
 
-    SnowflakeService(int port){
+    SnowflakeService(){
         Server server = new Server();
         server.onConnect(client -> {
             clientMap.putIfAbsent(client, System.currentTimeMillis());
@@ -20,10 +26,8 @@ class SnowflakeService {
                     Packet packet = Packet.builder();
 
                     for(int i = 0; i < value; i++) {
-                        String out = Long.toString(snowflake.nextId())+"\n";
-                        packet.putBytes(out.getBytes(StandardCharsets.UTF_8));
-
-                        if(packet.getSize() >= 4000){
+                        packet.putLong(snowflake.nextId());
+                        if(packet.getSize() >= 4096){
                             packet.writeAndFlush(client);
                             packet = Packet.builder();
                         }
@@ -31,12 +35,21 @@ class SnowflakeService {
 
                     packet.writeAndFlush(client);
                     clientMap.replace(client, System.currentTimeMillis());
-                    Main.getIdsServed().getAndAdd(value);
+                    ids_served.getAndAdd(value);
                 }
             });
 
             client.preDisconnect(()-> clientMap.remove(client));
         });
-        server.bind("localhost", port);
+        server.bind("localhost", Main.getPort());
+
+
+        threadPool.scheduleAtFixedRate(()-> clientMap.forEach((client, lastActivity) -> {
+            if((System.currentTimeMillis() - lastActivity) > 10000){
+                client.close();
+            }
+        }), 20, 1, TimeUnit.SECONDS);
     }
+
+    static AtomicInteger getIdsServed(){ return ids_served; }
 }
