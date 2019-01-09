@@ -1,4 +1,4 @@
-#JSnowflake
+# JSnowflake
 
 JSnowflake is a java implementation of twitter's Snowflake, which is a network service for generating unique ID numbers at high scale with some simple guarantees.
 You can read more about the original project here: https://github.com/twitter-archive/snowflake/tree/snowflake-2010#snowflake
