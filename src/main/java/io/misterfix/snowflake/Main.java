@@ -12,8 +12,11 @@ public class Main {
     private static final int datacenterId = 1;
     @Parameter(names = {"--instance-id"}, description = "Numeric instance ID which runs of this datacenter (0 - 31). Default 1")
     private static final int instanceId = 1;
-    @Parameter(names = {"--epoch"}, description = "Snowflake epoch")
+    @Parameter(names = {"--epoch"}, description = "Snowflake epoch. Default 1436077819000 or Sunday, July 5, 2015 6:30:19 AM")
     private static final long epoch = 1436077819000L;
+    @Parameter(names = {"--max-ids-per-socket"}, description = "Maximum amount of Snowflakes that can be served in a single request. Default 131072")
+    private static final int max_snowflakes_per_socket = 131072;
+
     private static Snowflake snowflake = new Snowflake(datacenterId, instanceId, epoch);
 
     public static void main(String[] args) {
@@ -30,4 +33,5 @@ public class Main {
     static int getDatacenterId(){ return datacenterId; }
     static int getInstanceId(){ return instanceId; }
     static long getEpoch(){ return epoch; }
+    static int getMaxSnowflakesPerSocket(){ return max_snowflakes_per_socket; }
 }

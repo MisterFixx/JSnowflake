@@ -19,10 +19,11 @@ class SnowflakeService {
 
     SnowflakeService(){
         Server server = new Server();
+
         server.onConnect(client -> {
             clientMap.putIfAbsent(client, System.currentTimeMillis());
             client.readIntAlways(value -> {
-                if(value <= 100000){
+                if(value <= Main.getMaxSnowflakesPerSocket()){
                     Packet packet = Packet.builder();
 
                     for(int i = 0; i < value; i++) {
@@ -41,6 +42,7 @@ class SnowflakeService {
 
             client.preDisconnect(()-> clientMap.remove(client));
         });
+
         server.bind("localhost", Main.getPort());
 
 
